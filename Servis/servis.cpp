@@ -13,10 +13,27 @@
 #pragma comment (lib, "Mswsock.lib")
 #pragma comment (lib, "AdvApi32.lib")
 
-#define SERVER_PORT 27016
+#define SERVER_PORT 5059
 #define BUFFER_SIZE 256
 
+
+
 int main() {
+
+    DWORD print0ID;
+    HANDLE LoadBalancerT;
+    LoadBalancerT = CreateThread(NULL, 0, , NULL, 0, &print0ID);
+
+    DWORD print1ID, print2ID, print3ID, print4ID, print5ID;
+    HANDLE Worker1, Worker2, Worker3, Worker4, Worker5;
+
+    Worker1 = CreateThread(NULL, 0, &print1, NULL, 0, &print1ID);
+    Worker2 = CreateThread(NULL, 0, &print2, NULL, 0, &print2ID);
+    Worker3 = CreateThread(NULL, 0, &print3, NULL, 0, &print3ID);
+    Worker4 = CreateThread(NULL, 0, &print3, NULL, 0, &print4ID);
+    Worker5 = CreateThread(NULL, 0, &print3, NULL, 0, &print5ID);
+
+
 
     // Socket used for listening for new clients 
     SOCKET listenSocket = INVALID_SOCKET;
