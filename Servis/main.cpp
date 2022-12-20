@@ -19,7 +19,7 @@
 
 
 int main() {
-
+    /*
     DWORD print0ID;
     HANDLE LoadBalancerT;
     LoadBalancerT = CreateThread(NULL, 0, , NULL, 0, &print0ID);
@@ -32,7 +32,7 @@ int main() {
     Worker3 = CreateThread(NULL, 0, &print3, NULL, 0, &print3ID);
     Worker4 = CreateThread(NULL, 0, &print3, NULL, 0, &print4ID);
     Worker5 = CreateThread(NULL, 0, &print3, NULL, 0, &print5ID);
-
+    */
 
 
     // Socket used for listening for new clients 
@@ -121,7 +121,7 @@ int main() {
             return 1;
         }
 
-       // printf("\nNew client request accepted. Client address: %s : %d\n", inet_ntoa(clientAddr.sin_addr), ntohs(clientAddr.sin_port));
+        printf("\nNew client request accepted. Client address: %s : %d\n", inet_ntoa(clientAddr.sin_addr), ntohs(clientAddr.sin_port));
 
         do
         {

@@ -16,6 +16,7 @@
 #define SERVER_IP_ADDRESS "127.0.0.1"
 #define SERVER_PORT 5059
 #define BUFFER_SIZE 256
+#define SLEEP_TIME 3000
 
 
 
@@ -67,22 +68,27 @@ int main() {
 		return 1;
 	}
 
-	// Read string from user into outgoing buffer
-	printf("Enter message to send: ");
-	gets_s(dataBuffer, BUFFER_SIZE);
+	printf("Client is sending a message every %d milliseconds to the servis!", SLEEP_TIME);
 
-	// Send message to server using connected socket
-	iResult = send(connectSocket, dataBuffer, (int)strlen(dataBuffer), 0);
+	while (true) {
 
-	// Check result of send function
-	if (iResult == SOCKET_ERROR)
-	{
-		printf("send failed with error: %d\n", WSAGetLastError());
-		closesocket(connectSocket);
-		WSACleanup();
-		return 1;
+		_itoa_s(rand() % 100, dataBuffer, 10);
+
+		// Send message to server using connected socket
+		iResult = send(connectSocket, dataBuffer, (int)strlen(dataBuffer), 0);
+
+		// Check result of send function
+		if (iResult == SOCKET_ERROR)
+		{
+			printf("send failed with error: %d\n", WSAGetLastError());
+			closesocket(connectSocket);
+			WSACleanup();
+			return 1;
+		}
+
+		Sleep(SLEEP_TIME);
+
 	}
-
 	// Shutdown the connection since we're done
 	iResult = shutdown(connectSocket, SD_BOTH);
 
