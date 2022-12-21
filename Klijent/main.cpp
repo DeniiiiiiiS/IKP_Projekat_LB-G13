@@ -73,7 +73,8 @@ int main() {
 	while (true) {
 
 		_itoa_s(rand() % 100, dataBuffer, 10);
-
+		//printf("Enter message to send: ");
+		//gets_s(dataBuffer, BUFFER_SIZE);
 		// Send message to server using connected socket
 		iResult = send(connectSocket, dataBuffer, (int)strlen(dataBuffer), 0);
 

@@ -16,7 +16,30 @@
 #define SERVER_PORT 5059
 #define BUFFER_SIZE 256
 
+struct Elem {
+    short data;
+    sockaddr client;
+    struct Elem* next;
+};
 
+CRITICAL_SECTION csQ;
+
+void AddNode() {
+    EnterCriticalSection(&csQ);
+    // TO DO 
+
+
+
+    LeaveCriticalSection(&csQ);
+}
+DWORD WINAPI GetNode(LPVOID lpParam) {
+    EnterCriticalSection(&csQ);
+    // TO DO 
+
+
+
+    LeaveCriticalSection(&csQ);
+}
 
 int main() {
     /*
@@ -34,6 +57,7 @@ int main() {
     Worker5 = CreateThread(NULL, 0, &print3, NULL, 0, &print5ID);
     */
 
+    InitializeCriticalSection(&csQ);
 
     // Socket used for listening for new clients 
     SOCKET listenSocket = INVALID_SOCKET;
@@ -171,6 +195,8 @@ int main() {
 
     // Deinitialize WSA library
     WSACleanup();
+
+    DeleteCriticalSection(&csQ);
 
 	return 0;
 }
