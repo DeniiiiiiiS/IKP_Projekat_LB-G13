@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "conio.h"
+#include "queue.h"
 
 #pragma comment (lib, "Ws2_32.lib")
 #pragma comment (lib, "Mswsock.lib")
@@ -16,30 +17,10 @@
 #define SERVER_PORT 5059
 #define BUFFER_SIZE 256
 
-struct Elem {
-    short data;
-    sockaddr client;
-    struct Elem* next;
-};
+struct Queue* queue;
 
 CRITICAL_SECTION csQ;
 
-void AddNode() {
-    EnterCriticalSection(&csQ);
-    // TO DO 
-
-
-
-    LeaveCriticalSection(&csQ);
-}
-DWORD WINAPI GetNode(LPVOID lpParam) {
-    EnterCriticalSection(&csQ);
-    // TO DO 
-
-
-
-    LeaveCriticalSection(&csQ);
-}
 
 int main() {
     /*
