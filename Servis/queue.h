@@ -11,11 +11,20 @@ struct Queue {
     Elem* array;
 };
 
+//TO DO
+//FUNCKIJA KOJA VRACA KREIRANI QUEUE
 Queue* CreateQueue(unsigned short capacity);
 
+
+//TO DO
+//UBACI PODATAK U QUEUE NA POCETAK
 void AddElem(unsigned short data, unsigned short port, IN_ADDR adrress);
 
-void GetElem();
 
+//TO DO
+//FUNKCIJA KOJA VRACA ZADNJI PODATAK IZ QUEUE
+Elem GetElem();
+
+//VALJDA NEKA FUNKCIJA ZA LOAD BALANCER KOJA VRACA PROCENAT POPUNJENOSTI QUEUE
 double GetStatus();
 

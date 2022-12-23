@@ -23,7 +23,7 @@ CRITICAL_SECTION csQ;
 
 
 int main() {
-    /*
+    /* 
     DWORD print0ID;
     HANDLE LoadBalancerT;
     LoadBalancerT = CreateThread(NULL, 0, , NULL, 0, &print0ID);
@@ -137,6 +137,9 @@ int main() {
             {
                 dataBuffer[iResult] = '\0';
                 printf("Client sent: %s.\n", dataBuffer);
+
+                //TO DO
+                //TREBA DA SE POZOVE FUNKCIJA ZA UPIS U QUEUE
      
 
             }
@@ -181,3 +184,14 @@ int main() {
 
 	return 0;
 }
+
+DWORD WINAPI Worker(LPVOID lpParam) {
+    //TO DO
+    //TREBA DA SE POZOVE FUNKCIJA ZA DA SE UZME PODADTAK IZ QUEUE
+    //PA POSLE TREBA DA SE UPISE U TEXT FAJL TI PODACI
+    //TREBA LOCK KOD UPISA U FAJL
+
+    return 0;
+}
+//TO DO
+//TREBA DA SE NAPRAVI FUNCKIJA ZA LOADBALANCER 

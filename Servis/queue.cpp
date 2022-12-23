@@ -2,4 +2,5 @@
 #include "queue.h"
 
 
-
+//TO DO
+//IMPLEMENTIRATI FUNKCIJE ZA QUEUE
