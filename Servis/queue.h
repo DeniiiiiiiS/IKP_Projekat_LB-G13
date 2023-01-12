@@ -1,14 +1,9 @@
 #pragma once
 #include <winsock2.h>
-struct Elem {
-    unsigned short data;
-    unsigned short port;
-    IN_ADDR adrress;
-};
 
 struct Queue {
-    unsigned short capactity;
-    Elem* array;
+    unsigned short capactity, size, head, tail;
+    int* array;
 };
 
 //TO DO
@@ -18,13 +13,16 @@ Queue* CreateQueue(unsigned short capacity);
 
 //TO DO
 //UBACI PODATAK U QUEUE NA POCETAK
-void AddElem(unsigned short data, unsigned short port, IN_ADDR adrress);
+bool AddElem(struct Queue* queue, int data);
 
 
 //TO DO
 //FUNKCIJA KOJA VRACA ZADNJI PODATAK IZ QUEUE
-Elem GetElem();
+int GetData(struct Queue *queue);
 
-//VALJDA NEKA FUNKCIJA ZA LOAD BALANCER KOJA VRACA PROCENAT POPUNJENOSTI QUEUE
-double GetStatus();
+bool IsEmpty(struct Queue* queue);
+
+bool IsFull(struct Queue* queue);
+
+void FreeQueue(struct Queue* queue);
 
