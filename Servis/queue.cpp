@@ -36,8 +36,8 @@ bool AddElem(struct Queue* queue, int data) {
 	queue->array[queue->tail] = data;
 	queue->size = queue->size + 1;
 	queue->tail = queue->tail + 1;
-	if (queue->size == queue->capactity)
-		queue->size = 0;
+	if (queue->tail == queue->capactity)
+		queue->tail = 0;
 
 	return true;
 }

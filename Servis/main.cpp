@@ -204,7 +204,7 @@ DWORD WINAPI Worker(LPVOID lpParam) {
         printf("Error opening file!\n");
         return 1;
     }
-
+    
 
     fprintf(f, "%hu %hu %s", el.data, el.port, el.adrress);
 
