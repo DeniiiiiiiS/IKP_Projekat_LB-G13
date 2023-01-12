@@ -27,7 +27,13 @@ bool IsFull(struct Queue* queue) {
 
 //TO DO
 //ISTO KAO I IS FULL SAMO DA LI JE SIZE 0
-bool IsEmpty(struct Queue* queue) {}
+bool IsEmpty(struct Queue* queue) {
+	if (queue->size == 0){
+		return true;
+	}
+	return false;
+
+}
 
 bool AddElem(struct Queue* queue, int data) {
 	if (IsFull(queue))
@@ -45,5 +51,17 @@ bool AddElem(struct Queue* queue, int data) {
 
 //TO DO
 //FUNKCIJA KOJA VRACA ZADNJI PODATAK IZ QUEUE
-int GetData(struct Queue* queue);
+int GetData(struct Queue* queue){
+
+	if (IsEmpty(queue))
+		return -1;
+
+	int data = queue->array[queue->head];
+	queue->size = queue->size - 1;
+	queue->tail = queue->head + 1;
+	if (queue->head == queue->capactity)
+		queue->head = 0;
+
+	return data;
+}
 

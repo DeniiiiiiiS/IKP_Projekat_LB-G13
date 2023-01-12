@@ -196,7 +196,7 @@ DWORD WINAPI Worker(LPVOID lpParam) {
 
     EnterCriticalSection(&csW);
 
-    struct Elem el = GetElem();
+    int data = GetData(queue);
 
     FILE* f = fopen("data.txt", "w");
 
@@ -206,7 +206,7 @@ DWORD WINAPI Worker(LPVOID lpParam) {
     }
     
 
-    fprintf(f, "%hu %hu %s", el.data, el.port, el.adrress);
+    fprintf(f, "%i", data);
 
     fclose(f);
 
