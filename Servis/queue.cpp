@@ -58,7 +58,7 @@ int GetData(struct Queue* queue){
 
 	int data = queue->array[queue->head];
 	queue->size = queue->size - 1;
-	queue->tail = queue->head + 1;
+	queue->head = queue->head + 1;
 	if (queue->head == queue->capactity)
 		queue->head = 0;
 
