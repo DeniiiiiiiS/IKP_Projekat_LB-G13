@@ -20,6 +20,7 @@
 struct Queue* queue;
 
 CRITICAL_SECTION csQ;
+CRITICAL_SECTION csW;
 
 
 int main() {
@@ -39,6 +40,7 @@ int main() {
     */
 
     InitializeCriticalSection(&csQ);
+    InitializeCriticalSection(&csW);
 
     // Socket used for listening for new clients 
     SOCKET listenSocket = INVALID_SOCKET;
@@ -181,6 +183,7 @@ int main() {
     WSACleanup();
 
     DeleteCriticalSection(&csQ);
+    DeleteCriticalSection(&csW);
 
 	return 0;
 }
@@ -190,6 +193,24 @@ DWORD WINAPI Worker(LPVOID lpParam) {
     //TREBA DA SE POZOVE FUNKCIJA ZA DA SE UZME PODADTAK IZ QUEUE
     //PA POSLE TREBA DA SE UPISE U TEXT FAJL TI PODACI
     //TREBA LOCK KOD UPISA U FAJL
+
+    EnterCriticalSection(&csW);
+
+    struct Elem el = GetElem();
+
+    FILE* f = fopen("data.txt", "w");
+
+    if (f == NULL){
+        printf("Error opening file!\n");
+        return 1;
+    }
+
+
+    fprintf(f, "%hu %hu %s", el.data, el.port, el.adrress);
+
+    fclose(f);
+
+    LeaveCriticalSection(&csW);
 
     return 0;
 }
