@@ -65,3 +65,7 @@ int GetData(struct Queue* queue){
 	return data;
 }
 
+void FreeQueue(struct Queue* queue) {
+	free(queue->array);
+	free(queue);
+}

@@ -1,7 +1,7 @@
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 
 #define WIN32_LEAN_AND_MEAN
-
+#define _CRT_SECURE_NO_DEPRECATE
 #include <windows.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -16,43 +16,56 @@
 
 #define SERVER_PORT 5059
 #define BUFFER_SIZE 256
+#define MAX_CLIENTS 15
+
+
+
 
 struct Queue* queue;
 
-CRITICAL_SECTION csQ;
 CRITICAL_SECTION csW;
+CRITICAL_SECTION csQ;
 
+//FUNKCIJA ZA LOAD BALANCER
+DWORD WINAPI LoadBalancer(LPVOID lpParam);
+//FUNKCIJA ZA WORKER
+DWORD WINAPI Worker(LPVOID lpParam);
+//FUNKCIJA ZA DODAVANJE PODATKA U QUEUE
+bool AddItem(struct Queue* queue, int data);
+//FUNKCIJA ZA DOBIJANJE PODATKA
+int GetItem(struct Queue* queue);
 
 int main() {
-    /* 
+     
+    queue = CreateQueue(15);
+
     DWORD print0ID;
     HANDLE LoadBalancerT;
-    LoadBalancerT = CreateThread(NULL, 0, , NULL, 0, &print0ID);
-
+    LoadBalancerT = CreateThread(NULL, 0, &LoadBalancer, NULL, 0, &print0ID);
+    
     DWORD print1ID, print2ID, print3ID, print4ID, print5ID;
     HANDLE Worker1, Worker2, Worker3, Worker4, Worker5;
 
-    Worker1 = CreateThread(NULL, 0, &print1, NULL, 0, &print1ID);
-    Worker2 = CreateThread(NULL, 0, &print2, NULL, 0, &print2ID);
-    Worker3 = CreateThread(NULL, 0, &print3, NULL, 0, &print3ID);
-    Worker4 = CreateThread(NULL, 0, &print3, NULL, 0, &print4ID);
-    Worker5 = CreateThread(NULL, 0, &print3, NULL, 0, &print5ID);
-    */
+    Worker1 = CreateThread(NULL, 0, &Worker, NULL, 0, &print1ID);
+   // Worker2 = CreateThread(NULL, 0, &Worker, NULL, 0, &print2ID);
+   // Worker3 = CreateThread(NULL, 0, &Worker, NULL, 0, &print3ID);
+   // Worker4 = CreateThread(NULL, 0, &Worker, NULL, 0, &print4ID);
+   // Worker5 = CreateThread(NULL, 0, &Worker, NULL, 0, &print5ID);
+    
 
-    InitializeCriticalSection(&csQ);
     InitializeCriticalSection(&csW);
+    InitializeCriticalSection(&csQ);
 
     // Socket used for listening for new clients 
     SOCKET listenSocket = INVALID_SOCKET;
-
-    // Socket used for communication with client
-    SOCKET acceptedSocket = INVALID_SOCKET;
 
     // Variable used to store function return value
     int iResult;
 
     // Buffer used for storing incoming data
     char dataBuffer[BUFFER_SIZE];
+
+    fd_set readfds;
 
     // WSADATA data structure that is to receive details of the Windows Sockets implementation
     WSADATA wsaData;
@@ -85,6 +98,14 @@ int main() {
         return 1;
     }
 
+    char multiple = !0;
+    int res = setsockopt(listenSocket, SOL_SOCKET, SO_REUSEADDR, &multiple, sizeof(multiple));
+    if (res < 0) {
+        closesocket(listenSocket);
+        WSACleanup();
+        return 0;
+    }
+
     // Setup the TCP listening socket - bind port number and local address to socket
     iResult = bind(listenSocket, (struct sockaddr*)&serverAddress, sizeof(serverAddress));
 
@@ -109,81 +130,121 @@ int main() {
 
     printf("Servis socket is set to listening mode. Waiting for new connection requests.\n");
 
-    do
-    {
-        // Struct for information about connected client
-        sockaddr_in clientAddr;
+    fd_set socketSet;
+    SOCKET clients[MAX_CLIENTS];
+    SOCKET acceptedSocket = INVALID_SOCKET, sdmax = INVALID_SOCKET;
+    int curentNumberOfSockets = 0;
 
-        int clientAddrSize = sizeof(struct sockaddr_in);
+    memset(clients, 0, MAX_CLIENTS * sizeof(SOCKET));
 
-        // Accept new connections from clients 
-        acceptedSocket = accept(listenSocket, (struct sockaddr*)&clientAddr, &clientAddrSize);
+    while (true) {
+        FD_ZERO(&socketSet);
+        FD_SET(listenSocket, &socketSet);
 
-        // Check if accepted socket is valid 
-        if (acceptedSocket == INVALID_SOCKET)
-        {
-            printf("accept failed with error: %d\n", WSAGetLastError());
-            closesocket(listenSocket);
-            WSACleanup();
-            return 1;
+        for (int i = 0; i < MAX_CLIENTS; i++) {
+            acceptedSocket = clients[i];
+
+            if (acceptedSocket > 0) {
+                FD_SET(acceptedSocket, &socketSet);
+            }
+            if (acceptedSocket > sdmax) {
+                sdmax = acceptedSocket;
+            }
         }
 
-        printf("\nNew client request accepted. Client address: %s : %d\n", inet_ntoa(clientAddr.sin_addr), ntohs(clientAddr.sin_port));
+        int activity = select(sdmax + 1, &socketSet, NULL, NULL, NULL);
+        if (activity < 0)
+            continue;
+        if (FD_ISSET(listenSocket, &socketSet)) {
+            sockaddr_in clientAddr;
 
-        do
-        {
-            // Receive data until the client shuts down the connection
-            iResult = recv(acceptedSocket, dataBuffer, BUFFER_SIZE, 0);
+            int clientAddrSize = sizeof(struct sockaddr_in);
 
-            if (iResult > 0)	// Check if message is successfully received
+            // Accept new connections from clients 
+            acceptedSocket = accept(listenSocket, (struct sockaddr*)&clientAddr, &clientAddrSize);
+            // Check if accepted socket is valid 
+            if (acceptedSocket == INVALID_SOCKET)
             {
-                dataBuffer[iResult] = '\0';
-                printf("Client sent: %s.\n", dataBuffer);
-
-                //TO DO
-                //TREBA DA SE POZOVE FUNKCIJA ZA UPIS U QUEUE
-     
-
+                printf("accept failed with error: %d\n", WSAGetLastError());
+                closesocket(listenSocket);
+                WSACleanup();
+                return 1;
             }
-            else if (iResult == 0)	// Check if shutdown command is received
-            {
-                // Connection was closed successfully
-                printf("Connection with client closed.\n");
+
+            printf("\nNew client request accepted. Client address: %s : %d\n", inet_ntoa(clientAddr.sin_addr), ntohs(clientAddr.sin_port));
+
+            if (curentNumberOfSockets >= MAX_CLIENTS) {
+                printf("Full!\n");
+                shutdown(acceptedSocket, SD_BOTH);
                 closesocket(acceptedSocket);
             }
-            else	// There was an error during recv
-            {
-                printf("recv failed with error: %d\n", WSAGetLastError());
-                closesocket(acceptedSocket);
+            else {
+                for (int i = 0; i < MAX_CLIENTS; i++) {
+                    if (!clients[i]) {
+                        clients[i] = acceptedSocket;
+                        curentNumberOfSockets++;
+                        break;
+                    }
+                }
             }
 
-        } while (iResult > 0);
+        }
+        for (int i = 0; i < MAX_CLIENTS; i++) {
+            if (!clients[i]) {
+                continue;
+            }
 
-        // Here is where server shutdown loguc could be placed
+            acceptedSocket = clients[i];
+            if (FD_ISSET(acceptedSocket, &socketSet)) {
+                // Receive data until the client shuts down the connection
+                iResult = recv(acceptedSocket, dataBuffer, BUFFER_SIZE, 0);
 
-    } while (true);
+                if (iResult > 0)	// Check if message is successfully received
+                {
+                    dataBuffer[iResult] = '\0';
+                    printf("Client sent: %s.\n", dataBuffer);
 
-    // Shutdown the connection since we're done
-    iResult = shutdown(acceptedSocket, SD_BOTH);
+                    AddItem(queue, atoi(dataBuffer));
 
-    // Check if connection is succesfully shut down.
-    if (iResult == SOCKET_ERROR)
-    {
-        printf("shutdown failed with error: %d\n", WSAGetLastError());
-        closesocket(acceptedSocket);
-        WSACleanup();
-        return 1;
+
+                }
+                else if (iResult == 0)	// Check if shutdown command is received
+                {
+                    // Connection was closed successfully
+                    printf("Connection with client closed.\n");
+                    shutdown(acceptedSocket, SD_BOTH);
+                    closesocket(acceptedSocket);
+                    clients[i] = 0;
+                    curentNumberOfSockets--;
+                }
+                else	// There was an error during recv
+                {
+                    printf("recv failed with error: %d\n", WSAGetLastError());
+                    shutdown(acceptedSocket, SD_BOTH);
+                    closesocket(acceptedSocket);
+                    clients[i] = 0;
+                    curentNumberOfSockets--;
+                }
+            }
+        }
+    }
+
+    for (int i = 0; i < MAX_CLIENTS; i++) {
+        shutdown(clients[i], SD_BOTH);
+        closesocket(clients[i]);
+        clients[i] = 0;
     }
 
     //Close listen and accepted sockets
     closesocket(listenSocket);
-    closesocket(acceptedSocket);
-
+    
     // Deinitialize WSA library
     WSACleanup();
 
     DeleteCriticalSection(&csQ);
     DeleteCriticalSection(&csW);
+    CloseHandle(LoadBalancerT);
+    FreeQueue(queue);
 
 	return 0;
 }
@@ -194,25 +255,71 @@ DWORD WINAPI Worker(LPVOID lpParam) {
     //PA POSLE TREBA DA SE UPISE U TEXT FAJL TI PODACI
     //TREBA LOCK KOD UPISA U FAJL
 
-    EnterCriticalSection(&csW);
-
-    int data = GetData(queue);
-
-    FILE* f = fopen("data.txt", "w");
-
-    if (f == NULL){
-        printf("Error opening file!\n");
-        return 1;
-    }
     
+    while (true) {
+        int data = GetItem(queue);
+        if (data == -1)
+            continue;
+        EnterCriticalSection(&csW);
 
-    fprintf(f, "%i", data);
+        FILE* f = fopen("data.txt", "a");
 
-    fclose(f);
+        if (f == NULL) {
+            printf("Error opening file!\n");
+            return 1;
+        }
 
-    LeaveCriticalSection(&csW);
+        fprintf(f, "%i", data);
+        fprintf(f, "\n");
+        
+
+        fclose(f);
+
+        LeaveCriticalSection(&csW);
+
+        Sleep(2000);
+    }
 
     return 0;
 }
 //TO DO
 //TREBA DA SE NAPRAVI FUNCKIJA ZA LOADBALANCER 
+DWORD WINAPI LoadBalancer(LPVOID lpParam) {
+
+    while (true) {
+        double capacity = (double)(queue->size) / (double)(queue->capactity) * 100;
+        printf("The current capacity of the queue is %lf % \n", capacity);
+        if (capacity == 100) {
+            //ONEMOGUCITI SLANJE NOVIH PORUKA OD KLIJENATA
+        }
+        else if (capacity > 70) {
+            //PALITI NOVE NIT
+        }
+        else if(capacity < 30)
+        {
+            //GASITI NITI
+        }
+   
+
+        Sleep(3000);
+    }
+    return 0;
+}
+bool AddItem(struct Queue* queue, int data) {
+    bool rez;
+    EnterCriticalSection(&csQ);
+    if (AddElem(queue, data)) 
+        rez = true;
+    else
+        rez = false;
+    LeaveCriticalSection(&csQ);
+    return rez;
+}
+int GetItem(struct Queue* queue) {
+
+    EnterCriticalSection(&csQ);
+    int data = GetData(queue);
+    LeaveCriticalSection(&csQ);
+
+    return data;
+}
