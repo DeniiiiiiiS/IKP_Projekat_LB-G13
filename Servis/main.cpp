@@ -211,10 +211,8 @@ int main() {
                 if (iResult > 0)	// Check if message is successfully received
                 {
                     dataBuffer[iResult] = '\0';
-                    printf("Client sent: %s.\n", dataBuffer);
 
                     AddItem(queue, atoi(dataBuffer));
-
 
                 }
                 else if (iResult == 0)	// Check if shutdown command is received
