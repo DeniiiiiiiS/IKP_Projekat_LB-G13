@@ -2,10 +2,6 @@
 #include "queue.h"
 
 
-//TO DO
-//IMPLEMENTIRATI FUNKCIJE ZA QUEUE
-
-
 
 Queue* CreateQueue(unsigned short capacity) {
 	struct Queue* queue = (struct Queue*)malloc(sizeof(struct Queue));
@@ -25,8 +21,6 @@ bool IsFull(struct Queue* queue) {
 	return false;
 }
 
-//TO DO
-//ISTO KAO I IS FULL SAMO DA LI JE SIZE 0
 bool IsEmpty(struct Queue* queue) {
 	if (queue->size == 0){
 		return true;
@@ -48,9 +42,6 @@ bool AddElem(struct Queue* queue, int data) {
 	return true;
 }
 
-
-//TO DO
-//FUNKCIJA KOJA VRACA ZADNJI PODATAK IZ QUEUE
 int GetData(struct Queue* queue){
 
 	if (IsEmpty(queue))

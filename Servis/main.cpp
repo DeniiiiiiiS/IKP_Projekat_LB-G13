@@ -17,9 +17,10 @@
 #define SERVER_PORT 5059
 #define BUFFER_SIZE 256
 #define MAX_CLIENTS 15
+#define QUEUE_CAPACITIY 20
+#define NUMBER_OF_WORKERS 7
 
-
-
+HANDLE Semaphores[NUMBER_OF_WORKERS];
 
 struct Queue* queue;
 
@@ -32,26 +33,34 @@ DWORD WINAPI LoadBalancer(LPVOID lpParam);
 DWORD WINAPI Worker(LPVOID lpParam);
 //FUNKCIJA ZA DODAVANJE PODATKA U QUEUE
 bool AddItem(struct Queue* queue, int data);
-//FUNKCIJA ZA DOBIJANJE PODATKA
+//FUNKCIJA ZA DOBIJANJE PODATKA IZ QUEUE
 int GetItem(struct Queue* queue);
 
 int main() {
      
-    queue = CreateQueue(15);
+    queue = CreateQueue(QUEUE_CAPACITIY);
 
     DWORD print0ID;
     HANDLE LoadBalancerT;
     LoadBalancerT = CreateThread(NULL, 0, &LoadBalancer, NULL, 0, &print0ID);
     
-    DWORD print1ID, print2ID, print3ID, print4ID, print5ID;
-    HANDLE Worker1, Worker2, Worker3, Worker4, Worker5;
-
-    Worker1 = CreateThread(NULL, 0, &Worker, NULL, 0, &print1ID);
-   // Worker2 = CreateThread(NULL, 0, &Worker, NULL, 0, &print2ID);
-   // Worker3 = CreateThread(NULL, 0, &Worker, NULL, 0, &print3ID);
-   // Worker4 = CreateThread(NULL, 0, &Worker, NULL, 0, &print4ID);
-   // Worker5 = CreateThread(NULL, 0, &Worker, NULL, 0, &print5ID);
-    
+    DWORD print1ID, print2ID, print3ID, print4ID, print5ID, print6ID, print7ID;
+    HANDLE Worker1, Worker2, Worker3, Worker4, Worker5, Worker6, Worker7;
+   
+    Worker1 = CreateThread(NULL, 0, &Worker, (LPVOID)0, 0, &print1ID);
+    Worker2 = CreateThread(NULL, 0, &Worker, (LPVOID)1, 0, &print2ID);
+    Worker3 = CreateThread(NULL, 0, &Worker, (LPVOID)2, 0, &print3ID);
+    Worker4 = CreateThread(NULL, 0, &Worker, (LPVOID)3, 0, &print4ID);
+    Worker5 = CreateThread(NULL, 0, &Worker, (LPVOID)4, 0, &print5ID);
+    Worker6 = CreateThread(NULL, 0, &Worker, (LPVOID)5, 0, &print6ID);
+    Worker7 = CreateThread(NULL, 0, &Worker, (LPVOID)6, 0, &print7ID);
+    Semaphores[0] = CreateSemaphore(0, 0, 1, NULL);
+    Semaphores[1] = CreateSemaphore(0, 0, 1, NULL);
+    Semaphores[2] = CreateSemaphore(0, 0, 1, NULL);
+    Semaphores[3] = CreateSemaphore(0, 0, 1, NULL);
+    Semaphores[4] = CreateSemaphore(0, 0, 1, NULL);
+    Semaphores[5] = CreateSemaphore(0, 0, 1, NULL);
+    Semaphores[6] = CreateSemaphore(0, 0, 1, NULL);
 
     InitializeCriticalSection(&csW);
     InitializeCriticalSection(&csQ);
@@ -244,19 +253,28 @@ int main() {
     DeleteCriticalSection(&csQ);
     DeleteCriticalSection(&csW);
     CloseHandle(LoadBalancerT);
+    CloseHandle(Worker1);
+    CloseHandle(Worker2);
+    CloseHandle(Worker3);
+    CloseHandle(Worker4);
+    CloseHandle(Worker5);
+    CloseHandle(Worker6);
+    CloseHandle(Worker7);
+    CloseHandle(Semaphores[0]);
+    CloseHandle(Semaphores[1]);
+    CloseHandle(Semaphores[2]);
+    CloseHandle(Semaphores[3]);
+    CloseHandle(Semaphores[4]);
+    CloseHandle(Semaphores[5]);
+    CloseHandle(Semaphores[6]);
     FreeQueue(queue);
 
 	return 0;
 }
 
 DWORD WINAPI Worker(LPVOID lpParam) {
-    //TO DO
-    //TREBA DA SE POZOVE FUNKCIJA ZA DA SE UZME PODADTAK IZ QUEUE
-    //PA POSLE TREBA DA SE UPISE U TEXT FAJL TI PODACI
-    //TREBA LOCK KOD UPISA U FAJL
-
-    
     while (true) {
+        WaitForSingleObject(Semaphores[(int)lpParam], INFINITE);
         int data = GetItem(queue);
         if (data == -1)
             continue;
@@ -277,31 +295,24 @@ DWORD WINAPI Worker(LPVOID lpParam) {
 
         LeaveCriticalSection(&csW);
 
-        Sleep(2000);
+        Sleep(3000);
     }
 
     return 0;
 }
-//TO DO
-//TREBA DA SE NAPRAVI FUNCKIJA ZA LOADBALANCER 
 DWORD WINAPI LoadBalancer(LPVOID lpParam) {
 
     while (true) {
+        ReleaseSemaphore(Semaphores[0], 1, NULL);
         double capacity = (double)(queue->size) / (double)(queue->capactity) * 100;
-        printf("The current capacity of the queue is %lf % \n", capacity);
-        if (capacity == 100) {
-            //ONEMOGUCITI SLANJE NOVIH PORUKA OD KLIJENATA
-        }
-        else if (capacity > 70) {
-            //PALITI NOVE NIT
-        }
-        else if(capacity < 30)
-        {
-            //GASITI NITI
+        printf("The current capacity of the queue is %lf  % ! \n", capacity);
+        if (capacity > 70) {
+            for (int i = 1; i < 5; i++) {
+                ReleaseSemaphore(Semaphores[i], 1, NULL);
+            }
         }
    
-
-        Sleep(3000);
+        Sleep(2000);
     }
     return 0;
 }

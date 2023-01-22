@@ -6,23 +6,21 @@ struct Queue {
     int* array;
 };
 
-//TO DO
 //FUNCKIJA KOJA VRACA KREIRANI QUEUE
 Queue* CreateQueue(unsigned short capacity);
 
-
-//TO DO
-//UBACI PODATAK U QUEUE NA POCETAK
+//FUNKCIJA ZA DODAVANJE PODATKA U QUEUE
 bool AddElem(struct Queue* queue, int data);
 
-
-//TO DO
-//FUNKCIJA KOJA VRACA ZADNJI PODATAK IZ QUEUE
+//FUNKCIJA KOJA VRACA PODATAK IZ QUEUE
 int GetData(struct Queue *queue);
 
+//FUNKCIJA ZA PROVERU DA LI JE QUEUE PRAZAN
 bool IsEmpty(struct Queue* queue);
 
+//FUNKCIJA ZA PROVERU DA LI JE QUEU POPUNJEN
 bool IsFull(struct Queue* queue);
 
+//FUNKCIJA ZA OSLOBADJENJE QUEUE
 void FreeQueue(struct Queue* queue);
 
